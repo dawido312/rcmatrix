@@ -23,11 +23,16 @@ cout <<endl <<endl <<endl;
 
 fstream f1;
 f1.open("matrix.dat", fstream::in);
-rcmatrix kurwa(f1);
-cout << kurwa;
+rcmatrix filematrix(f1);
+cout << filematrix;
 f1.close();
 //cout << A[4];
 cout << endl << endl;
 A = B;
+cout << A;
+cout << endl;
+cout << A[0][1];
+cout << endl;
+A[1][1] = 997;
 cout << A;
 }

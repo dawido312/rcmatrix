@@ -19,6 +19,8 @@ class rcmatrix
 	rcmatrix & operator=(const rcmatrix&);
 	double read(int,int);
 	void write(double,int,int);
+	double* getMatrixData();
+	unsigned int getColumnCount();
 	class cref;
 
 
@@ -68,10 +70,10 @@ class rcmatrix::cref
 	operator double() const {
 		return a.read(i,j);	
 	}
-	/*double& operator[](unsigned int j)
+	double& operator[](unsigned int j)
 	{
-		return a.data->matrix + macierz(i, j, data->columns);
-	}*/
+		return *(a.getMatrixData() + macierz(i,j,a.getColumnCount()));
+	}
 	rcmatrix::cref& operator= (double val)
 	{
 	  cout << "void operator= "<<endl;
@@ -86,6 +88,14 @@ class rcmatrix::cref
 
 
 };
+
+unsigned int rcmatrix::getColumnCount() {
+	return data->columns;
+}
+
+double* rcmatrix::getMatrixData() {
+	return data->matrix;
+}
 
 double rcmatrix::read(int i, int j) {
 	return *(data->matrix + macierz(i, j, data->columns));
