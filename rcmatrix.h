@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
-#define macierz(w,k,rozmiar) w*rozmiar + k
+#define macierz(w,k,rozmiar) (w)*(rozmiar) + (k)
 using namespace std;
 
 class rcmatrix
@@ -9,15 +9,16 @@ class rcmatrix
 	struct rcdata;
 	rcdata* data;
 	public:
+	class cref;
 	rcmatrix(unsigned int a, unsigned int b, double c, double d);
 	rcmatrix(fstream&);
 	~rcmatrix();
 	friend void operator<<(ostream&, const rcmatrix&);
 	rcmatrix operator*(const rcmatrix&);
-	double operator[](unsigned int i);
+	rcmatrix::cref operator[](int i);
 	rcmatrix & operator=(const rcmatrix&);
 	double read(int,int);
-	double write(double,int,int);
+	void write(double,int,int);
 	class cref;
 
 
@@ -57,7 +58,7 @@ struct rcmatrix::rcdata
 	};
 };
 
-class cref
+class rcmatrix::cref
 {
 	friend class rcmatrix;
 	public:
@@ -65,24 +66,33 @@ class cref
 	int i,j;
 	cref(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
 	operator double() const {
-		
+		return a.read(i,j);	
 	}
-	double& operator[](unsigned int j)
+	/*double& operator[](unsigned int j)
 	{
 		return a.data->matrix + macierz(i, j, data->columns);
+	}*/
+	rcmatrix::cref& operator= (double val)
+	{
+	  cout << "void operator= "<<endl;
+	  a.write(val,i,j);
+	  return *this;
 	}
-
+	rcmatrix::cref& operator= (const cref& ref)
+	{
+	  return operator= ((double)ref);
+	}
 
 
 
 };
 
 double rcmatrix::read(int i, int j) {
-	return data->matrix + macierz(i, j, data->columns);
+	return *(data->matrix + macierz(i, j, data->columns));
 }
 
 void rcmatrix::write(double val,int i,int j) {
-	data->matrix + macierz(i, j, data->columns) = val;
+	*(data->matrix + macierz(i, j, data->columns)) = val;
 }
 
 rcmatrix::rcmatrix(unsigned int a =1, unsigned int b = 1, double c = 0, double d=0)
@@ -126,7 +136,7 @@ rcmatrix rcmatrix::operator*(const rcmatrix& b)
 	double s = 0;
 	unsigned int c = this->data->rows;
 	unsigned int d = b.data->columns;
-	//rcmatrix C(c, d);
+	rcmatrix C(c, d);
 	for (unsigned int i = 0;i<this->data->rows;i++)
 		for (unsigned int j = 0; j < b.data->columns; j++)
 		{
@@ -139,10 +149,10 @@ rcmatrix rcmatrix::operator*(const rcmatrix& b)
 	return C;
 }
 
-Cref rcmatrix::operator[](unsigned int i)
+rcmatrix::cref rcmatrix::operator[](int i)
 {
 	//double a = *(data->matrix+macierz(i,0,data->columns));
-	return Cref(*this,i,0);
+	return cref(*this,i,0);
 }
 
 rcmatrix& rcmatrix::operator=(const rcmatrix& a)
