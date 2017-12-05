@@ -21,6 +21,7 @@ class rcmatrix
 	void write(double,int,int);
 	double* getMatrixData();
 	unsigned int getColumnCount();
+	friend unsigned int print(const rcmatrix&);
 	class cref;
 
 
@@ -34,6 +35,7 @@ struct rcmatrix::rcdata
 	double value;
 	double value2 = 0;
 	double* matrix;
+	unsigned int n;
 	void fill(unsigned int rows, unsigned int columns, double value, double*matrix, double value2)
 	{
 		for (unsigned int i = 0; i < rows; i++)
@@ -50,14 +52,29 @@ struct rcmatrix::rcdata
 		columns = b;
 		value = c;
 		value2 = d;
+		n = 1;
 		matrix = new double[rows*columns];
 		fill(rows, columns, value, matrix, value2);
 	};
+
 
 	~rcdata()
 	{
 		delete [] matrix;
 	};
+
+	rcdata* detach()
+	{
+	cout <<"awefghjk";
+	if (n==1) return this;
+	rcdata * temp = new rcdata(rows, columns);
+	for (unsigned int i = 0; i < (temp->rows); i++)
+		for (unsigned int j = 0; j < temp->columns; j++)
+	*(temp->matrix+macierz(i,j,temp->columns)) = *(matrix+macierz(i,j,columns));
+	n--;
+	return temp;
+	};
+
 };
 
 class rcmatrix::cref
@@ -67,7 +84,8 @@ class rcmatrix::cref
 	rcmatrix& a;
 	int i,j;
 	cref(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
-	operator double() const {
+	operator double() const
+	{
 		return a.read(i,j);	
 	}
 	double& operator[](unsigned int j)
@@ -76,7 +94,7 @@ class rcmatrix::cref
 	}
 	rcmatrix::cref& operator= (double val)
 	{
-	  cout << "void operator= "<<endl;
+		
 	  a.write(val,i,j);
 	  return *this;
 	}
@@ -89,19 +107,24 @@ class rcmatrix::cref
 
 };
 
-unsigned int rcmatrix::getColumnCount() {
+unsigned int rcmatrix::getColumnCount() 
+{
 	return data->columns;
 }
 
-double* rcmatrix::getMatrixData() {
+double* rcmatrix::getMatrixData() 
+{
 	return data->matrix;
 }
 
-double rcmatrix::read(int i, int j) {
+double rcmatrix::read(int i, int j) 
+{
 	return *(data->matrix + macierz(i, j, data->columns));
 }
 
-void rcmatrix::write(double val,int i,int j) {
+void rcmatrix::write(double val,int i,int j) 
+{	data = data->detach();
+	cout <<"badziebadla";
 	*(data->matrix + macierz(i, j, data->columns)) = val;
 }
 
@@ -173,5 +196,11 @@ rcmatrix& rcmatrix::operator=(const rcmatrix& a)
 	for (unsigned int i = 0; i < (a.data->rows); i++)
 		for (unsigned int j = 0; j < a.data->columns; j++)
 	*(data->matrix+macierz(i,j,data->columns)) = *(a.data->matrix+macierz(i,j,a.data->columns));
+	data->n++;
 	return *this;
+}
+
+unsigned int print(const rcmatrix& a)
+{
+	return (a.data->n);
 }
