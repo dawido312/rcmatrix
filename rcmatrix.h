@@ -13,13 +13,15 @@ class rcmatrix
 	public:
 	class cref;
 	class cref2;
+	class WrongDim{};
+	class IndexOutOfRange{};
 	rcmatrix(unsigned int a, unsigned int b, double c, double d);
 	rcmatrix(fstream&);
 	~rcmatrix();
 	friend void operator<<(ostream&, const rcmatrix&);
 	friend void operator<<(ostream&, const cref2&);
 	rcmatrix operator*(const rcmatrix&);
-	rcmatrix::cref operator[](int i);
+	rcmatrix::cref operator[](unsigned int i);
 	rcmatrix & operator=(const rcmatrix&);
 	double read(int,int);
 	void write(double,int,int);
@@ -111,7 +113,7 @@ class rcmatrix::cref
 	friend class cref2;
 	public:
 	rcmatrix& a;
-	int i,j;
+	unsigned int i,j;
 	cref(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
 	/*operator double() const
 	{
@@ -119,7 +121,7 @@ class rcmatrix::cref
 	}*/
 	 rcmatrix::cref2 operator[](unsigned int j)
 	{
-		a.read(i,j);
+	if(j>a.data->columns) throw rcmatrix::IndexOutOfRange();
 		return cref2(a,i,j);
 	}
 
@@ -200,7 +202,7 @@ void operator << (ostream& c, const rcmatrix& p)
 
 rcmatrix rcmatrix::operator*(const rcmatrix& b)
 {
-	//if(this->data->columns!=a.data->rows) throw (WrongDim&)
+	if(this->data->columns!=b.data->rows) throw WrongDim();
 	double s = 0;
 	unsigned int c = this->data->rows;
 	unsigned int d = b.data->columns;
@@ -217,9 +219,9 @@ rcmatrix rcmatrix::operator*(const rcmatrix& b)
 	return C;
 }
 
-rcmatrix::cref rcmatrix::operator[](int i)
+rcmatrix::cref rcmatrix::operator[](unsigned int i)
 {
-	//double a = *(data->matrix+macierz(i,0,data->columns));
+	if(i>this->data->rows) throw IndexOutOfRange();
 	return cref(*this,i,0);
 }
 
