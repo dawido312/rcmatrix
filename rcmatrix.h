@@ -19,7 +19,6 @@ class rcmatrix
 	rcmatrix(fstream&);
 	~rcmatrix();
 	friend void operator<<(ostream&, const rcmatrix&);
-	friend void operator<<(ostream&, const cref2&);
 	rcmatrix operator*(const rcmatrix&);
 	rcmatrix::cref operator[](unsigned int i);
 	rcmatrix & operator=(const rcmatrix&);
@@ -90,10 +89,10 @@ class rcmatrix::cref2
 	int i,j;
 	cref2(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
 
-	/*operator double() const
+	operator double() const
 	{
 		return a.read(i,j);	
-	}*/
+	}
 
 	void operator= (double val)
 	{
@@ -101,10 +100,6 @@ class rcmatrix::cref2
 	   a.write(val,i,j);
 	}
 
-	/*rcmatrix::cref2& operator= (const cref2& ref)
-	{
-	  return operator= ((double)ref);
-	}*/
 };
 
 class rcmatrix::cref
@@ -115,33 +110,12 @@ class rcmatrix::cref
 	rcmatrix& a;
 	unsigned int i,j;
 	cref(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
-	/*operator double() const
-	{
-		return a.read(i,j);	
-	}*/
-	 rcmatrix::cref2 operator[](unsigned int j)
+	 
+	rcmatrix::cref2 operator[](unsigned int j)
 	{
 	if(j>a.data->columns) throw rcmatrix::IndexOutOfRange();
 		return cref2(a,i,j);
 	}
-
-	/*void operator= (double val)
-	{
-		
-	  a.write(val,i,j);
-	}*/
-
-	//cref2(&a,i,j);
-	/*rcmatrix::cref& operator= (double val)
-	{
-		
-	  a.write(val,i,j);
-	  return *this;
-	}*/
-
-
-
-
 };
 
 
@@ -229,11 +203,6 @@ rcmatrix& rcmatrix::operator=(const rcmatrix& a)
 {
 	delete this->data;
 	a.data->n++;
-	//rcdata* tmp = new rcdata(a.data->rows, a.data->columns,0,0);
-	//data = tmp;
-	//for (unsigned int i = 0; i < (a.data->rows); i++)
-	//	for (unsigned int j = 0; j < a.data->columns; j++)
-	//*(data->matrix+macierz(i,j,data->columns)) = *(a.data->matrix+macierz(i,j,a.data->columns));
 	data = a.data;
 	return *this;
 }
@@ -241,11 +210,4 @@ rcmatrix& rcmatrix::operator=(const rcmatrix& a)
 unsigned int print(const rcmatrix& a)
 {
 	return (a.data->n);
-}
-
-void operator<<(ostream& c, const rcmatrix::cref2& a)
-{
-unsigned int b = a.i;
-unsigned int d = a.j;
-c <<a.a.read(b, d);
 }

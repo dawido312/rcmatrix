@@ -35,7 +35,7 @@ int main()
 		cout << endl << endl;
 		cout <<print(A);
 		cout << endl;
-		cout << A[12][1];
+		cout << A[1][1];
 		cout << endl;
 		A[1][1] = 1.4;
 		cout <<endl;
