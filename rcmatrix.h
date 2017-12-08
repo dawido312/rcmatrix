@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <string.h>
+#include <new>
 #define macierz(w,k,rozmiar) (w)*(rozmiar) + (k)
 using namespace std;
 
@@ -10,10 +12,12 @@ class rcmatrix
 	rcdata* data;
 	public:
 	class cref;
+	class cref2;
 	rcmatrix(unsigned int a, unsigned int b, double c, double d);
 	rcmatrix(fstream&);
 	~rcmatrix();
 	friend void operator<<(ostream&, const rcmatrix&);
+	friend void operator<<(ostream&, const cref2&);
 	rcmatrix operator*(const rcmatrix&);
 	rcmatrix::cref operator[](int i);
 	rcmatrix & operator=(const rcmatrix&);
@@ -22,18 +26,17 @@ class rcmatrix
 	double* getMatrixData();
 	unsigned int getColumnCount();
 	friend unsigned int print(const rcmatrix&);
-	class cref;
 
 
 
 };
 
 struct rcmatrix::rcdata
-{	//TO JEST WERSJA BEZ ZLICZANIA
+{	
 	unsigned int rows;
 	unsigned int columns;
 	double value;
-	double value2 = 0;
+	double value2;
 	double* matrix;
 	unsigned int n;
 	void fill(unsigned int rows, unsigned int columns, double value, double*matrix, double value2)
@@ -65,7 +68,6 @@ struct rcmatrix::rcdata
 
 	rcdata* detach()
 	{
-	cout <<"awefghjk";
 	if (n==1) return this;
 	rcdata * temp = new rcdata(rows, columns);
 	for (unsigned int i = 0; i < (temp->rows); i++)
@@ -77,35 +79,69 @@ struct rcmatrix::rcdata
 
 };
 
+class rcmatrix::cref2
+{
+	friend class rcmatrix;
+	friend class cref;
+	public:
+	rcmatrix &a;
+	int i,j;
+	cref2(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
+
+	/*operator double() const
+	{
+		return a.read(i,j);	
+	}*/
+
+	void operator= (double val)
+	{
+		
+	   a.write(val,i,j);
+	}
+
+	/*rcmatrix::cref2& operator= (const cref2& ref)
+	{
+	  return operator= ((double)ref);
+	}*/
+};
+
 class rcmatrix::cref
 {
 	friend class rcmatrix;
+	friend class cref2;
 	public:
 	rcmatrix& a;
 	int i,j;
 	cref(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
-	operator double() const
+	/*operator double() const
 	{
 		return a.read(i,j);	
-	}
-	double& operator[](unsigned int j)
+	}*/
+	 rcmatrix::cref2 operator[](unsigned int j)
 	{
-		return *(a.getMatrixData() + macierz(i,j,a.getColumnCount()));
+		a.read(i,j);
+		return cref2(a,i,j);
 	}
-	rcmatrix::cref& operator= (double val)
+
+	/*void operator= (double val)
+	{
+		
+	  a.write(val,i,j);
+	}*/
+
+	//cref2(&a,i,j);
+	/*rcmatrix::cref& operator= (double val)
 	{
 		
 	  a.write(val,i,j);
 	  return *this;
-	}
-	rcmatrix::cref& operator= (const cref& ref)
-	{
-	  return operator= ((double)ref);
-	}
+	}*/
+
 
 
 
 };
+
 
 unsigned int rcmatrix::getColumnCount() 
 {
@@ -124,7 +160,6 @@ double rcmatrix::read(int i, int j)
 
 void rcmatrix::write(double val,int i,int j) 
 {	data = data->detach();
-	cout <<"badziebadla";
 	*(data->matrix + macierz(i, j, data->columns)) = val;
 }
 
@@ -191,16 +226,24 @@ rcmatrix::cref rcmatrix::operator[](int i)
 rcmatrix& rcmatrix::operator=(const rcmatrix& a)
 {
 	delete this->data;
-	rcdata* tmp = new rcdata(a.data->rows, a.data->columns, 0, 0);
-	data = tmp;
-	for (unsigned int i = 0; i < (a.data->rows); i++)
-		for (unsigned int j = 0; j < a.data->columns; j++)
-	*(data->matrix+macierz(i,j,data->columns)) = *(a.data->matrix+macierz(i,j,a.data->columns));
-	data->n++;
+	a.data->n++;
+	//rcdata* tmp = new rcdata(a.data->rows, a.data->columns,0,0);
+	//data = tmp;
+	//for (unsigned int i = 0; i < (a.data->rows); i++)
+	//	for (unsigned int j = 0; j < a.data->columns; j++)
+	//*(data->matrix+macierz(i,j,data->columns)) = *(a.data->matrix+macierz(i,j,a.data->columns));
+	data = a.data;
 	return *this;
 }
 
 unsigned int print(const rcmatrix& a)
 {
 	return (a.data->n);
+}
+
+void operator<<(ostream& c, const rcmatrix::cref2& a)
+{
+unsigned int b = a.i;
+unsigned int d = a.j;
+c <<a.a.read(b, d);
 }
