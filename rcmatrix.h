@@ -1,13 +1,12 @@
 #include <iostream>
 #include <fstream>
-#include <stdio.h>
-#include <string.h>
 #include <new>
+#include <cstring>
 #define macierz(w,k,rozmiar) (w)*(rozmiar) + (k)
 using namespace std;
 
 class rcmatrix
-{	
+{
 	struct rcdata;
 	rcdata* data;
 	public:
@@ -15,19 +14,22 @@ class rcmatrix
 	class cref2;
 	class WrongDim{};
 	class IndexOutOfRange{};
+	inline rcmatrix(const rcmatrix& x);
 	rcmatrix(unsigned int a, unsigned int b, double c, double d);
 	rcmatrix(fstream&);
 	~rcmatrix();
 	friend void operator<<(ostream&, const rcmatrix&);
 	rcmatrix operator*(const rcmatrix&);
-	rcmatrix::cref operator[](unsigned int i);
-	rcmatrix & operator=(const rcmatrix&);
-	double read(int,int);
-	void write(double,int,int);
-	double* getMatrixData();
-	unsigned int getColumnCount();
+	cref operator[](unsigned int i);
+	rcmatrix& operator=(const rcmatrix&);
+	double read(unsigned int,unsigned int);
+	void write(double,unsigned int,unsigned int);
 	friend unsigned int print(const rcmatrix&);
+/*	rcdata *temp = new rcdata(a.data->rows,a.data->columns, a.data->value,a.data->value2);
+	data = temp;
 
+	rcdata *temp = new rcdata(a.data->rows,a.data->columns,0,0);
+	temp = a.data;*/
 
 
 };
@@ -83,11 +85,10 @@ struct rcmatrix::rcdata
 class rcmatrix::cref2
 {
 	friend class rcmatrix;
-	friend class cref;
 	public:
 	rcmatrix &a;
-	int i,j;
-	cref2(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
+	unsigned int i,j;
+	cref2(rcmatrix& aa,unsigned int ii,unsigned int jj): a(aa), i(ii), j(jj) {};
 
 	operator double() const
 	{
@@ -105,49 +106,38 @@ class rcmatrix::cref2
 class rcmatrix::cref
 {
 	friend class rcmatrix;
-	friend class cref2;
 	public:
 	rcmatrix& a;
 	unsigned int i,j;
-	cref(rcmatrix& aa, int ii,int jj): a(aa), i(ii), j(jj) {};
+	cref(rcmatrix& aa,unsigned int ii,unsigned int jj): a(aa), i(ii), j(jj) {};
 	 
 	rcmatrix::cref2 operator[](unsigned int j)
 	{
-	if(j>a.data->columns) throw rcmatrix::IndexOutOfRange();
+	if(j>a.data->columns) throw IndexOutOfRange();
 		return cref2(a,i,j);
 	}
 };
 
 
-unsigned int rcmatrix::getColumnCount() 
-{
-	return data->columns;
-}
-
-double* rcmatrix::getMatrixData() 
-{
-	return data->matrix;
-}
-
-double rcmatrix::read(int i, int j) 
+double rcmatrix::read(unsigned int i,unsigned int j) 
 {
 	return *(data->matrix + macierz(i, j, data->columns));
 }
 
-void rcmatrix::write(double val,int i,int j) 
+void rcmatrix::write(double val,unsigned int i,unsigned int j) 
 {	data = data->detach();
 	*(data->matrix + macierz(i, j, data->columns)) = val;
 }
 
-rcmatrix::rcmatrix(unsigned int a =1, unsigned int b = 1, double c = 0, double d=0)
+rcmatrix::rcmatrix(unsigned int a=1, unsigned int b=1, double c=0, double d=0)
 {
 	data = new rcdata(a, b, c, d);
 }
 
 rcmatrix::rcmatrix(fstream& a)
 {
-	int z = 0;
-	int x = 0;
+	unsigned int z = 0;
+	unsigned int x = 0;
 	a >> z;
 	a >> x;
 	data = new rcdata(z,x);
@@ -158,7 +148,8 @@ rcmatrix::rcmatrix(fstream& a)
 
 rcmatrix::~rcmatrix()
 {
-	delete data;
+  if(--data->n==0)
+    delete data;
 }
 
 void operator << (ostream& c, const rcmatrix& p)
@@ -176,17 +167,15 @@ void operator << (ostream& c, const rcmatrix& p)
 
 rcmatrix rcmatrix::operator*(const rcmatrix& b)
 {
-	if(this->data->columns!=b.data->rows) throw WrongDim();
+	if(data->columns!=b.data->rows) throw WrongDim();
 	double s = 0;
-	unsigned int c = this->data->rows;
-	unsigned int d = b.data->columns;
-	rcmatrix C(c, d);
-	for (unsigned int i = 0;i<this->data->rows;i++)
+	rcmatrix C(data->rows, b.data->columns);
+	for (unsigned int i = 0;i<data->rows;i++)
 		for (unsigned int j = 0; j < b.data->columns; j++)
 		{
 			s = 0;
-			for (unsigned int k = 0; k < this->data->columns; k++)
-			s += *(this->data->matrix+macierz(i,k,this->data->columns)) * (*(b.data->matrix+macierz(k,j,b.data->columns)));
+			for (unsigned int k = 0; k <data->columns; k++)
+			s += *(data->matrix+macierz(i,k,data->columns)) * (*(b.data->matrix+macierz(k,j,b.data->columns)));
 			*(C.data->matrix+macierz(i,j,b.data->columns))= s;
 
 		}
@@ -201,11 +190,17 @@ rcmatrix::cref rcmatrix::operator[](unsigned int i)
 
 rcmatrix& rcmatrix::operator=(const rcmatrix& a)
 {
-	delete this->data;
 	a.data->n++;
+ 	if(--data->n == 0) delete data;
 	data = a.data;
 	return *this;
 }
+
+inline rcmatrix::rcmatrix(const rcmatrix& x)
+  {
+    x.data->n++;
+    data=x.data;
+  }
 
 unsigned int print(const rcmatrix& a)
 {
